@@ -1,0 +1,33 @@
+@page "/my-posts"
+@inject HttpClient Http
+
+<h2>自分の動画・画像管理</h2>
+@if (Posts != null)
+{
+    <table>
+        <tr><th>ID</th><th>タイプ</th><th>タイトル</th><th>削除</th></tr>
+        @foreach(var p in Posts)
+        {
+            <tr>
+                <td>@p.Id</td>
+                <td>@p.MediaType</td>
+                <td>@p.Title</td>
+                <td>
+                    <button @onclick="() => DeletePost(p.Id)">削除</button>
+                </td>
+            </tr>
+        }
+    </table>
+}
+@code {
+    List<Post> Posts;
+    protected override async Task OnInitializedAsync()
+    {
+        Posts = await Http.GetFromJsonAsync<List<Post>>("/api/user/my-posts");
+    }
+    async Task DeletePost(int id)
+    {
+        await Http.DeleteAsync($"/api/user/post/{id}");
+        await OnInitializedAsync();
+    }
+}
