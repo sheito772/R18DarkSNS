@@ -1,0 +1,45 @@
+@page "/super-admin"
+@inject HttpClient Http
+<h2>管理者申請審査</h2>
+@if(Applications != null)
+{
+    <table>
+        <tr><th>ユーザー名</th><th>状態</th><th>申請日</th><th>審査</th><th>過去操作</th></tr>
+        @foreach(var app in Applications)
+        {
+            <tr>
+                <td>@app.User.UserName</td>
+                <td>@app.Status</td>
+                <td>@app.AppliedAt</td>
+                <td>
+                    @if(app.Status == "Pending") {
+                        <button @onclick="() => Approve(app.Id)">承認</button>
+                        <button @onclick="() => Reject(app.Id)">却下</button>
+                    } else {
+                        <span>@app.Status</span>
+                    }
+                </td>
+                <td>@app.Remarks</td>
+            </tr>
+        }
+    </table>
+}
+
+@code {
+    List<ManagerApplication> Applications;
+    protected override async Task OnInitializedAsync()
+    {
+        Applications = await Http.GetFromJsonAsync<List<ManagerApplication>>("/api/admin/manager/applications");
+    }
+    async Task Approve(int id)
+    {
+        await Http.PostAsync($"/api/admin/manager/approve/{id}", null);
+        await OnInitializedAsync();
+    }
+    async Task Reject(int id)
+    {
+        // Reject APIは未実装例ですが、同様に設計できます
+        await Http.PostAsync($"/api/admin/manager/reject/{id}", null);
+        await OnInitializedAsync();
+    }
+}
