@@ -1,0 +1,75 @@
+@page "/admin"
+@inject HttpClient Http
+
+<h1>管理者用ダッシュボード</h1>
+
+<h2>ユーザー一覧</h2>
+@if (Users != null)
+{
+    <table>
+        <tr><th>ID</th><th>ユーザー名</th><th>BAN</th><th>凍結</th></tr>
+        @foreach(var u in Users)
+        {
+            <tr>
+                <td>@u.Id</td>
+                <td>@u.UserName</td>
+                <td>
+                    @if (!u.IsBanned)
+                        <button @onclick="() => BanUser(u.Id)">BAN</button>
+                    else
+                        <span>済</span>
+                </td>
+                <td>
+                    @if (!u.IsFrozen)
+                        <button @onclick="() => FreezeUser(u.Id)">凍結</button>
+                    else
+                        <span>済</span>
+                </td>
+            </tr>
+        }
+    </table>
+}
+
+<h2>投稿一覧</h2>
+@if (Posts != null)
+{
+    <table>
+        <tr><th>ID</th><th>タイプ</th><th>タイトル</th><th>削除</th></tr>
+        @foreach(var p in Posts)
+        {
+            <tr>
+                <td>@p.Id</td>
+                <td>@p.MediaType</td>
+                <td>@p.Title</td>
+                <td>
+                    <button @onclick="() => DeletePost(p.Id)">削除</button>
+                </td>
+            </tr>
+        }
+    </table>
+}
+
+@code {
+    List<User> Users; List<Post> Posts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = await Http.GetFromJsonAsync<List<User>>("api/admin/users");
+        Posts = await Http.GetFromJsonAsync<List<Post>>("api/posts");
+    }
+    async Task BanUser(int id)
+    {
+        await Http.PostAsync($"api/admin/ban/{id}", null);
+        await OnInitializedAsync();
+    }
+    async Task FreezeUser(int id)
+    {
+        await Http.PostAsync($"api/admin/freeze/{id}", null);
+        await OnInitializedAsync();
+    }
+    async Task DeletePost(int id)
+    {
+        await Http.DeleteAsync($"api/admin/post/{id}");
+        await OnInitializedAsync();
+    }
+}
