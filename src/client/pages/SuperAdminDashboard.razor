@@ -1,0 +1,72 @@
+@page "/super-admin"
+@inject HttpClient Http
+
+<h1>SuperAdmin管理ダッシュボード</h1>
+
+@if (Applications != null)
+{
+    <table>
+        <tr>
+            <th>ユーザー</th>
+            <th>状態</th>
+            <th>申請日</th>
+            <th>最終操作日</th>
+            <th>承認/却下/復活</th>
+            <th>履歴・備考</th>
+        </tr>
+        @foreach (var app in Applications)
+        {
+            <tr>
+                <td>@app.User.UserName (@app.User.Email)</td>
+                <td>@app.Status</td>
+                <td>@app.AppliedAt.ToString("yyyy-MM-dd")</td>
+                <td>@(app.ActionedAt?.ToString("yyyy-MM-dd"))</td>
+                <td>
+                    @if (app.Status == ManagerStatus.Pending)
+                    {
+                        <button @onclick="() => Approve(app.Id)">承認</button>
+                        <button @onclick="() => Reject(app.Id)">却下</button>
+                    }
+                    else if (app.Status == ManagerStatus.Removed)
+                    {
+                        <button @onclick="() => Restore(app.Id)">復活承認</button>
+                    }
+                    else
+                    {
+                        <span>@app.Status</span>
+                    }
+                </td>
+                <td>@app.Remarks</td>
+            </tr>
+        }
+    </table>
+}
+else
+{
+    <p>申請履歴の取得中...</p>
+}
+
+@code {
+    List<ManagerApplication> Applications;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Applications = await Http.GetFromJsonAsync<List<ManagerApplication>>("/api/admin/manager/applications");
+    }
+
+    async Task Approve(int id)
+    {
+        await Http.PostAsJsonAsync($"/api/admin/manager/approve/{id}", "");
+        await OnInitializedAsync();
+    }
+    async Task Reject(int id)
+    {
+        await Http.PostAsJsonAsync($"/api/admin/manager/reject/{id}", "");
+        await OnInitializedAsync();
+    }
+    async Task Restore(int id)
+    {
+        await Http.PostAsJsonAsync($"/api/admin/manager/restore/{id}", "");
+        await OnInitializedAsync();
+    }
+}
